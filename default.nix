@@ -66,6 +66,7 @@ buildGoModule {
 
   meta = {
     description = "Manage Nix package patch stacks with Quilt";
+    homepage = "https://github.com/awked-com/overlay";
     platforms = [
       "x86_64-linux"
       "aarch64-linux"

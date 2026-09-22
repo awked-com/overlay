@@ -7,17 +7,17 @@ NixOS configuration or organization.
 
 ## Install and run
 
-From this checkout:
+Install the published command:
 
 ```sh
-nix profile add /path/to/overlay
+nix profile add github:awked-com/overlay
 overlay -C /path/to/project list
 ```
 
 Or run without installing:
 
 ```sh
-nix run /path/to/overlay -- -C /path/to/project list
+nix run github:awked-com/overlay -- -C /path/to/project list
 ```
 
 The Nix package includes Quilt, Nix, and archive tools in the command's runtime
@@ -25,6 +25,10 @@ environment. It supports x86_64 Linux, aarch64 Linux, and aarch64 macOS, and
 installs Bash, Zsh, and Fish completions. `nix build` produces the package;
 `packages.<system>.overlay`, `apps.<system>.overlay`, and `overlays.default`
 are also exported.
+
+For local development, replace `github:awked-com/overlay` with this checkout's
+path. The shared [packages](https://github.com/awked-com/packages) overlay also
+provides `pkgs.overlay` at a pinned source revision.
 
 ## Project layout
 
