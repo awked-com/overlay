@@ -54,6 +54,15 @@ func projectPath(root, path string) string {
 }
 
 func sourceFlakeReference(root string) (string, error) {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return "", err
+	}
+	// Nix path inputs reject symlink components, including macOS's /tmp alias.
+	root, err = filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", err
+	}
 	for dir := root; ; dir = filepath.Dir(dir) {
 		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
 			reference := url.URL{Scheme: "git+file", Path: dir}

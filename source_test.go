@@ -80,6 +80,13 @@ func TestNativeNixSources(t *testing.T) {
 		nativeSourceWrite(t, root, "source/content.txt", "non-Git source\n")
 		source := nativeSourceResolve(t, root, "")
 		nativeSourceContent(t, source, "content.txt", "non-Git source\n")
+
+		alias := filepath.Join(t.TempDir(), "project-alias")
+		if err := os.Symlink(root, alias); err != nil {
+			t.Fatal(err)
+		}
+		source = nativeSourceResolve(t, alias, "")
+		nativeSourceContent(t, source, "content.txt", "non-Git source\n")
 	})
 
 	t.Run("package output wins over overlay fallback", func(t *testing.T) {
