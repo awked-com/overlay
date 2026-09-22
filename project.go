@@ -3,7 +3,6 @@ package overlay
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,38 +50,6 @@ func projectPath(root, path string) string {
 		return path
 	}
 	return filepath.Join(root, path)
-}
-
-func sourceFlakeReference(root string) (string, error) {
-	root, err := filepath.Abs(root)
-	if err != nil {
-		return "", err
-	}
-	// Nix path inputs reject symlink components, including macOS's /tmp alias.
-	root, err = filepath.EvalSymlinks(root)
-	if err != nil {
-		return "", err
-	}
-	for dir := root; ; dir = filepath.Dir(dir) {
-		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
-			reference := url.URL{Scheme: "git+file", Path: dir}
-			relative, err := filepath.Rel(dir, root)
-			if err != nil {
-				return "", err
-			}
-			if relative != "." {
-				query := url.Values{"dir": {filepath.ToSlash(relative)}}
-				// Flake URL queries use percent escapes, not form-style '+' spaces.
-				reference.RawQuery = strings.ReplaceAll(query.Encode(), "+", "%20")
-			}
-			return reference.String(), nil
-		} else if !errors.Is(err, os.ErrNotExist) {
-			return "", err
-		}
-		if filepath.Dir(dir) == dir {
-			return (&url.URL{Scheme: "path", Path: root}).String(), nil
-		}
-	}
 }
 
 // resolveDirectory resolves existing ancestors even when the final directory

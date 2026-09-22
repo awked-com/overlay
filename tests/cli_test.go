@@ -11,26 +11,11 @@ import (
 )
 
 func TestOverlayThroughCLI(t *testing.T) {
-	repository, err := filepath.Abs("..")
-	if err != nil {
-		t.Fatal(err)
-	}
+	binary := buildOverlay(t)
 	root := t.TempDir()
-	binary := filepath.Join(root, "overlay")
-	build := exec.Command("go", "build", "-o", binary, "./cmd/overlay")
-	build.Dir = repository
-	if output, err := build.CombinedOutput(); err != nil {
-		t.Fatalf("build: %v\n%s", err, output)
-	}
 	write := func(name, contents string, mode os.FileMode) {
 		t.Helper()
-		path := filepath.Join(root, name)
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(path, []byte(contents), mode); err != nil {
-			t.Fatal(err)
-		}
+		writeFile(t, filepath.Join(root, name), contents, mode)
 	}
 	write("flake.nix", "{}\n", 0600)
 	write("pkgs/fixture/default.nix", "{}\n", 0600)

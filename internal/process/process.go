@@ -16,8 +16,6 @@ import (
 	"github.com/awked-com/overlay/internal/terminal"
 )
 
-var Nix = []string{"nix", "--extra-experimental-features", "nix-command flakes"}
-
 var (
 	commandWord    = regexp.MustCompile(`^[a-zA-Z0-9_@%+=:,./-]+$`)
 	urlCredentials = regexp.MustCompile(`([a-zA-Z][a-zA-Z0-9+.-]*://)[^/\s]*@`)

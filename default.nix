@@ -22,9 +22,6 @@ buildGoModule {
       ./go.mod
       ./go.sum
       ./source.nix
-      ./cmd
-      ./internal
-      ./tests
       (lib.fileset.fileFilter (file: file.hasExt "go") ./.)
     ];
   };
