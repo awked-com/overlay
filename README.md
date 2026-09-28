@@ -3,6 +3,10 @@
 Maintain numbered package patches with Quilt. `overlay` prepares worktrees from
 locked Nix sources, applies patch stacks, and refreshes patches into the project.
 
+Run a command with `--help` for usage and examples. Human-facing output uses
+color on terminals; `NO_COLOR=1`, `CLICOLOR=0`, or `TERM=dumb` disables it.
+Redirected output stays plain, and data streams keep their original format.
+
 ## Install and run
 
 ```sh
@@ -20,7 +24,7 @@ The package includes Quilt, Nix, archive tools, and Bash, Zsh, and Fish
 completions. It supports x86_64 Linux, aarch64 Linux, and aarch64 macOS.
 `nix build` builds the command. The flake exports `packages.<system>.overlay`,
 `apps.<system>.overlay`, and `overlays.default`; the shared
-[packages](https://github.com/awked-com/packages) overlay also provides
+[nix](https://github.com/awked-com/nix) overlay also provides
 `pkgs.overlay` at a pinned revision.
 
 ## Project layout and sources
