@@ -17,14 +17,41 @@ func Command() *cobra.Command {
 	var directory, packagesDir, worktrees, system string
 	var o *Overlay
 	command := &cobra.Command{
-		Use:   "overlay",
-		Short: "Edit package patch stacks",
-		Long:  "Edit numbered package patches with Quilt in any repository.\n\nThe nearest flake or Git checkout is selected by default; use -C to select another.\nPATCH_WORKTREES selects the worktree root; QUILT selects the Quilt executable.\nPass global flags before PACKAGE when forwarding commands to Quilt.",
+		ValidArgsFunction: cobra.NoFileCompletions,
+		Use:               "overlay",
+		Short:             "Edit package patch stacks",
+		Long:              "Edit numbered package patches with Quilt in any repository.\n\nThe nearest flake or Git checkout is selected by default; use -C to select another.\nPATCH_WORKTREES selects the worktree root; QUILT selects the Quilt executable.\nPass global flags before PACKAGE when forwarding commands to Quilt.",
 	}
 	command.PersistentFlags().StringVarP(&directory, "directory", "C", "", "Select project DIRECTORY (default: nearest flake or Git checkout)")
 	command.PersistentFlags().StringVar(&packagesDir, "packages-dir", "pkgs", "Package definitions DIRECTORY, relative to the project")
 	command.PersistentFlags().StringVar(&worktrees, "worktrees", "", "Worktree DIRECTORY, relative to the project (default: .patch-worktrees/pkgs)")
 	command.PersistentFlags().StringVar(&system, "system", "", "Select the Nix source SYSTEM (default: current system)")
+	command.MarkPersistentFlagDirname("directory")
+	for _, name := range []string{"packages-dir", "worktrees"} {
+		command.RegisterFlagCompletionFunc(name, func(_ *cobra.Command, _ []string, prefix string) ([]string, cobra.ShellCompDirective) {
+			root, err := projectRoot(directory)
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+			}
+			return completePaths(root, nil, prefix, true)
+		})
+	}
+	command.RegisterFlagCompletionFunc("system", func(_ *cobra.Command, _ []string, prefix string) ([]string, cobra.ShellCompDirective) {
+		return completeNames([]string{"aarch64-darwin", "aarch64-linux", "x86_64-linux"}, nil, prefix)
+	})
+	selectedOverlay := func() (*Overlay, error) {
+		root, err := projectRoot(directory)
+		if err != nil {
+			return nil, err
+		}
+		selected := NewOverlay(root)
+		selected.PackagesDir = projectPath(root, packagesDir)
+		selected.System = system
+		if worktrees != "" {
+			selected.Worktrees = projectPath(root, worktrees)
+		}
+		return selected, selected.validateDirectories()
+	}
 	command.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
 		// Help and completion must work even outside a project.
 		for c := cmd; c != nil; c = c.Parent() {
@@ -32,17 +59,9 @@ func Command() *cobra.Command {
 				return nil
 			}
 		}
-		root, err := projectRoot(directory)
-		if err != nil {
-			return err
-		}
-		o = NewOverlay(root)
-		o.PackagesDir = projectPath(root, packagesDir)
-		o.System = system
-		if worktrees != "" {
-			o.Worktrees = projectPath(root, worktrees)
-		}
-		return o.validateDirectories()
+		var err error
+		o, err = selectedOverlay()
+		return err
 	}
 	quilt := &cobra.Command{
 		Use:   "quilt PACKAGE COMMAND [ARGS...]",
@@ -387,5 +406,17 @@ func Command() *cobra.Command {
 		},
 	)
 
+	for _, child := range command.Commands() {
+		child.ValidArgsFunction = func(cmd *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
+			if cmd.Name() == "list" {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			selected, err := selectedOverlay()
+			if err != nil {
+				return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+			}
+			return selected.completeCommand(cmd, args, prefix)
+		}
+	}
 	return command
 }

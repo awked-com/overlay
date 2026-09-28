@@ -71,6 +71,19 @@ func addHelp(parent *cobra.Command) {
 	help := &cobra.Command{
 		Use:   "help [COMMAND [SUBCOMMAND...]]",
 		Short: "Show command help",
+		ValidArgsFunction: func(_ *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
+			target, rest, err := parent.Find(args)
+			if err != nil || len(rest) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+			var matches []string
+			for _, child := range target.Commands() {
+				if !child.Hidden && child.IsAvailableCommand() && strings.HasPrefix(child.Name(), prefix) {
+					matches = append(matches, child.Name()+"\t"+child.Short)
+				}
+			}
+			return matches, cobra.ShellCompDirectiveNoFileComp
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			target, rest, err := parent.Find(args)
 			if err != nil {
