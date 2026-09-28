@@ -14,7 +14,7 @@
 
 buildGoModule {
   pname = "overlay";
-  version = "0.1.0";
+  version = "unstable";
 
   src = lib.fileset.toSource {
     root = ./.;
