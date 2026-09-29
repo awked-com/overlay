@@ -3,9 +3,7 @@
 Maintain numbered package patches with Quilt. `overlay` prepares worktrees from
 locked Nix sources, applies patch stacks, and refreshes patches into the project.
 
-Run a command with `--help` for usage and examples. Human-facing output uses
-color on terminals; `NO_COLOR=1`, `CLICOLOR=0`, or `TERM=dumb` disables it.
-Redirected output stays plain, and data streams keep their original format.
+Run a command with `--help` for usage. Set `NO_COLOR=1` to disable terminal colors.
 
 ## Install and run
 
@@ -22,10 +20,7 @@ nix run github:awked-com/overlay -- -C /path/to/project list
 
 The package includes Quilt, Nix, archive tools, and Bash, Zsh, and Fish
 completions. It supports x86_64 Linux, aarch64 Linux, and aarch64 macOS.
-`nix build` builds the command. The flake exports `packages.<system>.overlay`,
-`apps.<system>.overlay`, and `overlays.default`; the shared
-[nix](https://github.com/awked-com/nix) overlay also provides
-`pkgs.overlay` at a pinned revision.
+The shared [nix](https://github.com/awked-com/nix) overlay also provides `pkgs.overlay`.
 
 ## Project layout and sources
 
@@ -56,11 +51,8 @@ overlay -C /path/to/project edit hello src/hello.c
 overlay -C /path/to/project refresh hello
 ```
 
-Use `select PACKAGE PATCH` to edit an existing patch, `quilt PACKAGE COMMAND
-[ARGS...]` to run Quilt directly, or `shell PACKAGE` to open a shell with the Quilt
-environment. `refresh-stacks [PACKAGE...]` refreshes whole stacks.
-`discard PACKAGE` removes its worktree, including unrefreshed edits, and preserves
-repository patches. See each command's `--help` for arguments.
+`discard` removes the worktree, including unrefreshed edits, and preserves
+repository patches.
 
 Worktrees default to `.patch-worktrees/pkgs` under the project. `--worktrees` or
 `PATCH_WORKTREES` selects another location. Keep worktrees out of version control

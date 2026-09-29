@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// UsageError adds a command-specific help hint without printing a catalog.
 func UsageError(cmd *cobra.Command, err error) error {
 	return &process.StatusError{Code: 2, Err: fmt.Errorf("%w\nRun `%s --help` for usage", err, cmd.CommandPath())}
 }
@@ -26,12 +25,10 @@ func Args(validate cobra.PositionalArgs) cobra.PositionalArgs {
 	}
 }
 
-// Execute applies shared help and error behavior to the command tree.
 func Execute(root *cobra.Command, args []string) error {
 	return ExecuteTo(root, args, os.Stdout, os.Stderr)
 }
 
-// ExecuteTo uses the supplied destinations for help and command output.
 func ExecuteTo(root *cobra.Command, args []string, out, stderr io.Writer) error {
 	root.SilenceErrors, root.SilenceUsage = true, true
 	var helpErr error

@@ -1,4 +1,3 @@
-// Package process handles subprocesses and atomic file updates.
 package process
 
 import (
