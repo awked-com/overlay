@@ -127,7 +127,6 @@ func CopyFile(src, dst string, mode os.FileMode) error {
 	return ce
 }
 
-// StatusError preserves a command-specific status, including failures without a diagnostic.
 type StatusError struct {
 	Code int
 	Err  error

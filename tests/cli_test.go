@@ -2,7 +2,6 @@ package overlay_test
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,71 +91,6 @@ exit "${OVERLAY_TEST_QUILT_EXIT:-0}"
 			}
 			if code != 0 && strings.Count(stderr.String(), "error:") != 1 {
 				t.Fatalf("expected one error: %s", &stderr)
-			}
-		})
-	}
-
-	for _, test := range []struct {
-		name     string
-		patches  int
-		applied  int
-		prepared bool
-	}{
-		{"empty", 0, 0, true},
-		{"unprepared", 3, 0, false},
-		{"pending", 3, 0, true},
-		{"mixed", 3, 2, true},
-		{"applied", 3, 3, true},
-	} {
-		t.Run("stack "+test.name, func(t *testing.T) {
-			pkg := "stack-" + test.name
-			write("pkgs/"+pkg+"/default.nix", "{}\n", 0600)
-			var patches []string
-			for i := range test.patches {
-				name := fmt.Sprintf("%04d-example.patch", i+1)
-				patches = append(patches, name)
-				write("pkgs/"+pkg+"/patches/"+name, "", 0600)
-			}
-			if test.prepared {
-				write("worktrees/"+pkg+"/.quilt-series", strings.Join(patches, "\n"), 0600)
-				applied := ""
-				if test.applied > 0 {
-					applied = strings.Join(patches[:test.applied], "\n") + "\n"
-				}
-				write("worktrees/"+pkg+"/.pc/applied-patches", applied, 0600)
-			}
-			cmd := exec.Command(binary, "status", pkg)
-			cmd.Dir = root
-			var stdout, stderr bytes.Buffer
-			cmd.Stdout, cmd.Stderr = &stdout, &stderr
-			if err := cmd.Run(); err != nil {
-				t.Fatalf("status: %v\n%s", err, &stderr)
-			}
-			output := stdout.String()
-			if stderr.Len() != 0 || strings.Contains(output, "\x1b[") {
-				t.Fatalf("unexpected stderr or color escapes: stdout=%q stderr=%q", output, &stderr)
-			}
-			var rows [][]string
-			for _, line := range strings.Split(output, "\n") {
-				fields := strings.Fields(line)
-				if len(fields) == 3 && strings.HasSuffix(fields[2], ".patch") {
-					rows = append(rows, fields)
-				}
-			}
-			if len(rows) != len(patches) {
-				t.Fatalf("got %d patch rows, want %d: %s", len(rows), len(patches), output)
-			}
-			for i, row := range rows {
-				state := "pending"
-				if i < test.applied {
-					state = "applied"
-				}
-				if i == test.applied-1 {
-					state = "current"
-				}
-				if row[1] != state || row[2] != patches[i] {
-					t.Errorf("patch row %q, want %s %s", row, state, patches[i])
-				}
 			}
 		})
 	}

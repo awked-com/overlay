@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-// These checks exercise Nix's real flake filtering and evaluation semantics.
-// The fixtures have only local inputs and need no package builds or downloads.
 func TestNativeNixSources(t *testing.T) {
 	if os.Getenv("OVERLAY_NATIVE_NIX_TESTS") != "1" {
 		t.Skip("set OVERLAY_NATIVE_NIX_TESTS=1 to exercise native Nix source lookup")
