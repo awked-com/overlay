@@ -3,7 +3,7 @@
 Maintain numbered package patches with Quilt. `overlay` prepares worktrees from
 locked Nix sources, applies patch stacks, and refreshes patches into the project.
 
-Run a command with `--help` for usage. Set `NO_COLOR=1` to disable terminal colors.
+Run a command with `--help` for usage.
 
 ## Install and run
 

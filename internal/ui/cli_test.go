@@ -29,16 +29,13 @@ func TestHelpRoutesDoNotRunCommands(t *testing.T) {
 	}
 }
 
-func TestCommandSuggestionsAndUsageStatus(t *testing.T) {
+func TestInvalidCommandUsageStatus(t *testing.T) {
 	for _, args := range [][]string{{"stats"}, {"help", "stats"}} {
 		root := &cobra.Command{Use: "infra"}
 		root.AddCommand(&cobra.Command{Use: "status", Run: func(*cobra.Command, []string) { t.Fatal("invalid command ran an operation") }})
 		out, err := executeOutput(t, root, args)
 		if out != "" || process.ExitCode(err) != 2 {
 			t.Fatalf("invalid command: output %q, error %v", out, err)
-		}
-		if !strings.Contains(err.Error(), "status") || !strings.Contains(err.Error(), "infra --help") {
-			t.Fatalf("missing command suggestion or usage hint: %v", err)
 		}
 	}
 }

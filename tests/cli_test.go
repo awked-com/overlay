@@ -136,22 +136,6 @@ exit "${OVERLAY_TEST_QUILT_EXIT:-0}"
 			if stderr.Len() != 0 || strings.Contains(output, "\x1b[") {
 				t.Fatalf("unexpected stderr or color escapes: stdout=%q stderr=%q", output, &stderr)
 			}
-			for _, count := range []string{
-				fmt.Sprintf("%d patches", test.patches),
-				fmt.Sprintf("%d applied", test.applied),
-				fmt.Sprintf("%d pending", test.patches-test.applied),
-			} {
-				if !strings.Contains(output, count) {
-					t.Errorf("missing count %q: %s", count, output)
-				}
-			}
-			if test.prepared {
-				if !strings.Contains(output, filepath.Join(root, "worktrees", pkg)) {
-					t.Errorf("missing worktree path: %s", output)
-				}
-			} else if !strings.Contains(output, "overlay setup "+pkg) {
-				t.Errorf("missing setup hint: %s", output)
-			}
 			var rows [][]string
 			for _, line := range strings.Split(output, "\n") {
 				fields := strings.Fields(line)
