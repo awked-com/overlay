@@ -119,18 +119,37 @@ func TestQuiltPatchLifecycle(t *testing.T) {
 	realQuilt(t)
 	binary := buildOverlay(t)
 	root := t.TempDir()
-	source := t.TempDir()
+	sourceRoot := t.TempDir()
+	source := filepath.Join(sourceRoot, "example")
+	t.Setenv("SOURCE_ROOT", sourceRoot)
 	writeFile(t, filepath.Join(root, "flake.nix"), "{}\n", 0600)
 	writeFile(t, filepath.Join(root, "pkgs", "example", "default.nix"), "{}\n", 0600)
 	patches := filepath.Join(root, "pkgs", "example", "patches")
 	writeFile(t, filepath.Join(patches, "0001-example.patch"), firstPatch, 0600)
 	writeFile(t, filepath.Join(source, "message.txt"), "original\n", 0600)
+	writeFile(t, filepath.Join(source, "untracked.txt"), "unchanged\n", 0600)
 	worktrees := filepath.Join(root, "worktrees with spaces")
 	t.Setenv("PATCH_WORKTREES", filepath.Join(root, "unused-environment-worktrees"))
 	worktree := filepath.Join(worktrees, "example")
 	run := func(args ...string) string {
 		t.Helper()
 		return runOverlay(t, binary, root, append([]string{"--worktrees", worktrees}, args...)...)
+	}
+	for _, args := range [][]string{
+		{"select", "example", "9999-missing.patch"},
+		{"new", "example", "0001-example.patch"},
+	} {
+		cmd := exec.Command(binary, append([]string{"--worktrees", worktrees}, args...)...)
+		cmd.Dir = root
+		if output, err := cmd.CombinedOutput(); err == nil {
+			t.Fatalf("invalid patch request succeeded: %v\n%s", args, output)
+		}
+		if _, err := os.Stat(worktrees); !os.IsNotExist(err) {
+			t.Fatalf("invalid patch request created a worktree: %v (%v)", args, err)
+		}
+		if readFile(t, filepath.Join(patches, "0001-example.patch")) != firstPatch {
+			t.Fatalf("invalid patch request changed the existing patch: %v", args)
+		}
 	}
 	run("setup", "example", source)
 	if got := readFile(t, filepath.Join(worktree, "message.txt")); got != "patched\n" {
@@ -146,6 +165,20 @@ func TestQuiltPatchLifecycle(t *testing.T) {
 	run("new", "example", "0002-revision.patch", "message.txt")
 	editor := filepath.Join(t.TempDir(), "editor")
 	writeFile(t, editor, "#!/bin/sh\nfor file do printf 'revised\\n' > \"$file\"; done\n", 0700)
+	for _, invalid := range []string{"'unterminated", "   "} {
+		t.Setenv("EDITOR", invalid)
+		cmd := exec.Command(binary, "--worktrees", worktrees, "edit", "example", "untracked.txt")
+		cmd.Dir = root
+		if output, err := cmd.CombinedOutput(); err == nil {
+			t.Fatalf("invalid editor succeeded: %q\n%s", invalid, output)
+		}
+		if files := run("quilt", "example", "files"); files != "message.txt\n" {
+			t.Fatalf("invalid editor added files to the current patch: %q", files)
+		}
+		if readFile(t, filepath.Join(worktree, "untracked.txt")) != "unchanged\n" {
+			t.Fatal("invalid editor changed an untracked file")
+		}
+	}
 	t.Setenv("EDITOR", editor)
 	run("edit", "example", "message.txt")
 	run("refresh", "example")

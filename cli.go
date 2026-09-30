@@ -194,17 +194,21 @@ func Command() *cobra.Command {
 				if e := ValidatePatch(patch); e != nil {
 					return e
 				}
-				worktree, e := o.Setup(pkg, "")
-				if e != nil {
-					return e
-				}
 				patches := o.patches(pkg)
-				names, applied, e := Stack(worktree, patches)
+				names, e := PatchNames(patches)
 				if e != nil {
 					return e
 				}
 				if !slices.Contains(names, patch) {
 					return fmt.Errorf("unknown patch: %s", patch)
+				}
+				worktree, e := o.Setup(pkg, "")
+				if e != nil {
+					return e
+				}
+				_, applied, e := Stack(worktree, patches)
+				if e != nil {
+					return e
 				}
 
 				if len(applied) > 0 {
@@ -230,17 +234,21 @@ func Command() *cobra.Command {
 				if e := ValidatePatch(patch); e != nil {
 					return e
 				}
-				worktree, e := o.Setup(pkg, "")
-				if e != nil {
-					return e
-				}
 				patches := o.patches(pkg)
-				names, applied, e := Stack(worktree, patches)
+				names, e := PatchNames(patches)
 				if e != nil {
 					return e
 				}
 				if len(names) > 0 && patch <= names[len(names)-1] {
 					return fmt.Errorf("new patch must sort after %s", names[len(names)-1])
+				}
+				worktree, e := o.Setup(pkg, "")
+				if e != nil {
+					return e
+				}
+				names, applied, e := Stack(worktree, patches)
+				if e != nil {
+					return e
 				}
 
 				if e = os.MkdirAll(patches, 0755); e != nil {
@@ -283,6 +291,19 @@ func Command() *cobra.Command {
 			Example: "  overlay edit hello src/main.c README.md",
 			Args:    ui.Args(cobra.MinimumNArgs(2)),
 			RunE: func(_ *cobra.Command, args []string) error {
+				editor := os.Getenv("EDITOR")
+				if editor == "" {
+					editor = "vi"
+				}
+
+				words, e := shlex.Split(editor)
+				if e != nil {
+					return e
+				}
+				if len(words) == 0 {
+					return errors.New("empty editor command")
+				}
+
 				pkg := args[0]
 				worktree, e := o.Setup(pkg, "")
 				if e != nil {
@@ -303,19 +324,6 @@ func Command() *cobra.Command {
 							return e
 						}
 					}
-				}
-
-				editor := os.Getenv("EDITOR")
-				if editor == "" {
-					editor = "vi"
-				}
-
-				words, e := shlex.Split(editor)
-				if e != nil {
-					return e
-				}
-				if len(words) == 0 {
-					return errors.New("empty editor command")
 				}
 
 				return commandAt(worktree, nil, append(words, args[1:]...)...).Run()
