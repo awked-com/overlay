@@ -12,9 +12,6 @@ nix profile add github:awked-com/overlay
 overlay -C /path/to/project list
 ```
 
-The shared [nix](https://github.com/awked-com/nix) overlay also provides
-`pkgs.overlay`.
-
 ## Project layout and sources
 
 Packages live at `pkgs/<name>/default.nix` and patches at
