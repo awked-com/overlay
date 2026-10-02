@@ -11,8 +11,6 @@ overlay -C /path/to/project edit hello src/hello.c
 overlay -C /path/to/project refresh hello
 ```
 
-See `overlay help` for commands, source selection, and directory options.
-
 ## Project setup
 
 Packages live at `pkgs/<name>/default.nix`. Recipes must attach their
