@@ -40,10 +40,3 @@ go build ./...
 nix flake check
 nix fmt
 ```
-
-The flake check builds the command and runs Go tests. Native source tests use
-synthetic inputs without downloads and need a local Nix store outside the sandbox:
-
-```sh
-nix develop -c env OVERLAY_NATIVE_NIX_TESTS=1 go test -run TestNativeNixSources -count=1 .
-```
