@@ -21,31 +21,6 @@ func TestNativeNixSources(t *testing.T) {
 	t.Setenv("PATCH_WORKTREES", "")
 	t.Setenv("NIX_CONFIG", os.Getenv("NIX_CONFIG")+"\nsubstituters =\nbuilders =\nflake-registry =\n")
 
-	t.Run("tracked local changes and ignored worktrees", func(t *testing.T) {
-		root := nativeSourceProject(t, map[string]string{
-			"flake.nix": `{ outputs = { self }: {
-  packages.${builtins.currentSystem}.demo.src = ./.;
-}; }`,
-			".gitignore":  ".patch-worktrees/\nignored.txt\n",
-			"tracked.txt": "committed source\n",
-		})
-		nativeSourceWrite(t, root, "tracked.txt", "local source edit\n")
-		nativeSourceWrite(t, root, "ignored.txt", "ignored fixture\n")
-		nativeSourceWrite(t, root, "untracked.txt", "untracked fixture\n")
-		nativeSourceWrite(t, root, ".patch-worktrees/pkgs/demo/work.txt", "worktree fixture\n")
-
-		source := nativeSourceResolve(t, root, "")
-		nativeSourceContent(t, source, "tracked.txt", "local source edit\n")
-		for _, excluded := range []string{"ignored.txt", "untracked.txt", ".patch-worktrees", ".git"} {
-			if _, err := os.Lstat(filepath.Join(source, excluded)); !os.IsNotExist(err) {
-				t.Errorf("Git-filtered source includes %s, or stat failed: %v", excluded, err)
-			}
-		}
-		if _, err := os.Stat(filepath.Join(root, "flake.lock")); !os.IsNotExist(err) {
-			t.Errorf("source lookup wrote an unexpected lock file: %v", err)
-		}
-	})
-
 	t.Run("nested Git flake with literal path characters", func(t *testing.T) {
 		const nested = `nested "quotes" ${literal}`
 		root := nativeSourceProject(t, map[string]string{
@@ -59,11 +34,12 @@ func TestNativeNixSources(t *testing.T) {
 		project := filepath.Join(root, nested)
 		nativeSourceWrite(t, project, "tracked.txt", "nested local source edit\n")
 		nativeSourceWrite(t, project, "ignored.txt", "ignored fixture\n")
+		nativeSourceWrite(t, project, "untracked.txt", "untracked fixture\n")
 		nativeSourceWrite(t, project, ".patch-worktrees/pkgs/demo/work.txt", "worktree fixture\n")
 
 		source := nativeSourceResolve(t, project, "")
 		nativeSourceContent(t, source, "tracked.txt", "nested local source edit\n")
-		for _, excluded := range []string{"ignored.txt", ".patch-worktrees", "outside.txt"} {
+		for _, excluded := range []string{"ignored.txt", "untracked.txt", ".patch-worktrees", "outside.txt", ".git"} {
 			if _, err := os.Lstat(filepath.Join(source, excluded)); !os.IsNotExist(err) {
 				t.Errorf("nested source includes %s, or stat failed: %v", excluded, err)
 			}
@@ -92,7 +68,7 @@ func TestNativeNixSources(t *testing.T) {
 			"flake.nix": `{
   inputs.nixpkgs.url = "path:./mock-nixpkgs";
   outputs = { self, nixpkgs }: {
-    packages.${builtins.currentSystem}.demo.src = ./selected;
+    packages.x86_64-linux.demo.src = ./selected;
     overlays.default = final: prev: throw "overlay fallback must remain unevaluated";
   };
 }`,
@@ -101,7 +77,7 @@ func TestNativeNixSources(t *testing.T) {
 			"mock-nixpkgs/default.nix": `{ system, overlays ? [] }: throw "nixpkgs fallback must remain unevaluated"`,
 		})
 		nativeSourceLock(t, root)
-		source := nativeSourceResolve(t, root, "")
+		source := nativeSourceResolve(t, root, "x86_64-linux")
 		nativeSourceContent(t, source, "content.txt", "package output\n")
 	})
 
@@ -121,6 +97,7 @@ func TestNativeNixSources(t *testing.T) {
 			"shared/nested/content.txt": "composed overlay\n",
 			"mock-nixpkgs/flake.nix":    `{ outputs = { self }: {}; }`,
 			"mock-nixpkgs/default.nix": `{ system, overlays ? [] }:
+assert system == "x86_64-linux";
 let
   base = { demo.src = ./upstream; };
   final = builtins.foldl' (prev: overlay: prev // overlay final prev) base overlays;
@@ -128,44 +105,8 @@ in final`,
 			"mock-nixpkgs/upstream/content.txt": "unoverlaid source\n",
 		})
 		nativeSourceLock(t, root)
-		source := nativeSourceResolve(t, root, "")
+		source := nativeSourceResolve(t, root, "x86_64-linux")
 		nativeSourceContent(t, source, "content.txt", "composed overlay\n")
-	})
-
-	t.Run("explicit Linux system", func(t *testing.T) {
-		for _, viaOutput := range []bool{true, false} {
-			name := "nixpkgs fallback"
-			if viaOutput {
-				name = "package output"
-			}
-			t.Run(name, func(t *testing.T) {
-				files := map[string]string{
-					"flake.nix": `{ outputs = { self }: {
-  packages.x86_64-linux.demo.src = ./linux;
-}; }`,
-					"linux/content.txt": "Linux source\n",
-				}
-				if !viaOutput {
-					files = map[string]string{
-						"flake.nix": `{
-  inputs.nixpkgs.url = "path:./mock-nixpkgs";
-  outputs = { self, nixpkgs }: {};
-}`,
-						"mock-nixpkgs/flake.nix": `{ outputs = { self }: {}; }`,
-						"mock-nixpkgs/default.nix": `{ system, overlays ? [] }:
-assert system == "x86_64-linux";
-{ demo.src = ./linux; }`,
-						"mock-nixpkgs/linux/content.txt": "Linux source\n",
-					}
-				}
-				root := nativeSourceProject(t, files)
-				if !viaOutput {
-					nativeSourceLock(t, root)
-				}
-				source := nativeSourceResolve(t, root, "x86_64-linux")
-				nativeSourceContent(t, source, "content.txt", "Linux source\n")
-			})
-		}
 	})
 }
 
