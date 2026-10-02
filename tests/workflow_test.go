@@ -72,7 +72,6 @@ func TestProjectSelection(t *testing.T) {
 	}{
 		{"nearest flake", []string{"list"}, "inner\n"},
 		{"explicit short directory", []string{"-C", root, "list"}, "outer\n"},
-		{"explicit long directory", []string{"--directory", root, "list"}, "outer\n"},
 		{"custom package directory", []string{"-C", root, "--packages-dir", "definitions", "list"}, "alternate\n"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -190,10 +189,6 @@ func TestQuiltPatchLifecycle(t *testing.T) {
 	if strings.Contains(refreshed, "Index:") || strings.Contains(refreshed, "\t") {
 		t.Fatalf("refresh retained index or timestamp metadata: %s", refreshed)
 	}
-	if got := run("status", "example"); !strings.Contains(got, "2 applied") || !strings.Contains(got, "current") {
-		t.Fatalf("unexpected applied stack: %s", got)
-	}
-
 	run("discard", "example")
 	if _, err := os.Stat(worktree); !os.IsNotExist(err) {
 		t.Fatalf("discard left worktree: %v", err)

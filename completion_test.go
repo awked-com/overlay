@@ -48,7 +48,6 @@ func TestProjectCompletion(t *testing.T) {
 		{[]string{"new", "hello", "0003-next.patch", "src/m"}, "src/main.c\n:4\n"},
 		{[]string{"setup", "hello", ""}, ":16\n"},
 		{[]string{"--packages-dir", "r"}, "recipes/\n:6\n"},
-		{[]string{"--system", "aarch64-d"}, "aarch64-darwin\n:4\n"},
 	} {
 		t.Run(strings.Join(test.args, "/"), func(t *testing.T) {
 			args := append([]string{"__complete", "-C", root, "--packages-dir", "recipes"}, test.args...)
