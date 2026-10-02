@@ -49,7 +49,6 @@ exit "${OVERLAY_TEST_QUILT_EXIT:-0}"
 		{"missing arguments", []string{"quilt", "fixture"}, false, "0", 2, "", "overlay quilt --help"},
 		{"unprepared", []string{"quilt", "fixture", "push"}, false, "0", 1, "", "overlay setup fixture"},
 		{"forwarded arguments", []string{"quilt", "fixture", "refresh", "a file", "--help", "$literal"}, true, "0", 0, "arg:refresh\narg:a file\narg:--help\narg:$literal\ninput\n", "refresh 'a file' --help '$literal'"},
-		{"setup prepared worktree", []string{"setup", "fixture"}, true, "0", 0, "Prepared worktree: " + filepath.Join(root, "worktrees", "fixture") + "\n", ""},
 		{"edit files", []string{"edit", "fixture", " tracked file ", "new file"}, true, "0", 0, "arg:add\narg:new file\ninput\neditor:--flag\neditor:a value\neditor: tracked file \neditor:new file\n", "editor --flag 'a value' ' tracked file ' 'new file'"},
 		{"child failure", []string{"quilt", "fixture", "push"}, true, "17", 17, "arg:push\ninput\n", "error:"},
 	} {

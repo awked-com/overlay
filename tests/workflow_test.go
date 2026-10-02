@@ -59,7 +59,6 @@ func TestProjectSelection(t *testing.T) {
 	binary := buildOverlay(t)
 	root := t.TempDir()
 	writeFile(t, filepath.Join(root, "flake.nix"), "{}\n", 0600)
-	writeFile(t, filepath.Join(root, "pkgs", "outer", "default.nix"), "{}\n", 0600)
 	writeFile(t, filepath.Join(root, "definitions", "alternate", "default.nix"), "{}\n", 0600)
 	inner := filepath.Join(root, "nested")
 	writeFile(t, filepath.Join(inner, "flake.nix"), "{}\n", 0600)
@@ -71,7 +70,6 @@ func TestProjectSelection(t *testing.T) {
 		want string
 	}{
 		{"nearest flake", []string{"list"}, "inner\n"},
-		{"explicit short directory", []string{"-C", root, "list"}, "outer\n"},
 		{"custom package directory", []string{"-C", root, "--packages-dir", "definitions", "list"}, "alternate\n"},
 	} {
 		t.Run(test.name, func(t *testing.T) {

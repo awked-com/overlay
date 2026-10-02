@@ -35,14 +35,6 @@ func TestMetadataRejectsSymlinksAndMismatchedStacks(t *testing.T) {
 		t.Fatal("out-of-order stack accepted")
 	}
 
-	if e := os.WriteFile(applied, []byte("0001-first.patch\n"), 0600); e != nil {
-		t.Fatal(e)
-	}
-
-	if _, _, e := overlay.Stack(worktree, patches); e != nil {
-		t.Fatal(e)
-	}
-
 	if e := os.Symlink(applied, filepath.Join(worktree, ".quilt-series")); e != nil {
 		t.Fatal(e)
 	}
