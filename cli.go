@@ -91,11 +91,9 @@ func Command() *cobra.Command {
 
 	command.AddCommand(
 		&cobra.Command{
-			Use:     "list",
-			Short:   "List package stacks",
-			Long:    "List directories with a default.nix definition under --packages-dir.",
-			Example: "  overlay list",
-			Args:    ui.Args(cobra.NoArgs),
+			Use:   "list",
+			Short: "List package stacks",
+			Args:  ui.Args(cobra.NoArgs),
 			RunE: func(_ *cobra.Command, args []string) error {
 				names, e := o.Packages()
 				if e != nil {
@@ -129,11 +127,9 @@ func Command() *cobra.Command {
 			},
 		},
 		&cobra.Command{
-			Use:     "status PACKAGE",
-			Short:   "Show a package patch stack",
-			Long:    "Show PACKAGE's patches and which are applied.",
-			Example: "  overlay status hello",
-			Args:    ui.Args(cobra.ExactArgs(1)),
+			Use:   "status PACKAGE",
+			Short: "Show a package patch stack",
+			Args:  ui.Args(cobra.ExactArgs(1)),
 			RunE: func(_ *cobra.Command, args []string) error {
 				pkg := args[0]
 				if e := o.ValidatePackage(pkg); e != nil {
@@ -330,11 +326,10 @@ func Command() *cobra.Command {
 			},
 		},
 		&cobra.Command{
-			Use:     "refresh PACKAGE",
-			Short:   "Refresh the current patch",
-			Long:    "Refresh PACKAGE's current patch without timestamps or index metadata.",
-			Example: "  overlay refresh hello",
-			Args:    ui.Args(cobra.ExactArgs(1)),
+			Use:   "refresh PACKAGE",
+			Short: "Refresh the current patch",
+			Long:  "Refresh PACKAGE's current patch without timestamps or index metadata.",
+			Args:  ui.Args(cobra.ExactArgs(1)),
 			RunE: func(_ *cobra.Command, args []string) error {
 				pkg := args[0]
 				worktree, e := o.Setup(pkg, "")
@@ -350,18 +345,16 @@ func Command() *cobra.Command {
 			Short:   "Refresh package patch stacks",
 			Long:    "Refresh all package patches, or only the listed packages. Use SOURCE_ROOT/PACKAGE\nif set; otherwise fetch sources from the locked flake.",
 			Example: "  overlay refresh-stacks\n  overlay refresh-stacks hello",
-			Args:    ui.Args(cobra.MinimumNArgs(0)),
 			RunE: func(_ *cobra.Command, args []string) error {
 				return o.RefreshStacks(args)
 			},
 		},
 		quilt,
 		&cobra.Command{
-			Use:     "shell PACKAGE",
-			Short:   "Open a Quilt shell",
-			Long:    "Open SHELL in PACKAGE's worktree with the Quilt environment configured.\nSHELL defaults to /bin/sh.",
-			Example: "  overlay shell hello",
-			Args:    ui.Args(cobra.ExactArgs(1)),
+			Use:   "shell PACKAGE",
+			Short: "Open a Quilt shell",
+			Long:  "Open SHELL in PACKAGE's worktree with the Quilt environment configured.\nSHELL defaults to /bin/sh.",
+			Args:  ui.Args(cobra.ExactArgs(1)),
 			RunE: func(_ *cobra.Command, args []string) error {
 				pkg := args[0]
 				worktree, e := o.Setup(pkg, "")
@@ -381,11 +374,10 @@ func Command() *cobra.Command {
 			},
 		},
 		&cobra.Command{
-			Use:     "discard PACKAGE",
-			Short:   "Remove a package worktree",
-			Long:    "Remove PACKAGE's worktree and its unrefreshed edits. Refresh edits first.\nRepository patch files are preserved.",
-			Example: "  overlay discard hello",
-			Args:    ui.Args(cobra.ExactArgs(1)),
+			Use:   "discard PACKAGE",
+			Short: "Remove a package worktree",
+			Long:  "Remove PACKAGE's worktree and its unrefreshed edits. Refresh edits first.\nRepository patch files are preserved.",
+			Args:  ui.Args(cobra.ExactArgs(1)),
 			RunE: func(_ *cobra.Command, args []string) error {
 				pkg := args[0]
 				if e := o.ValidatePackage(pkg); e != nil {

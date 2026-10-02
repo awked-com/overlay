@@ -1,70 +1,58 @@
 # overlay
 
-Maintain numbered package patches with Quilt. `overlay` prepares worktrees from
-locked Nix sources, applies patch stacks, and refreshes patches into the project.
-
-Run a command with `--help` for usage.
-
-## Install and run
+Maintain numbered package patches with Quilt, using worktrees from locked Nix
+sources or an unpacked source directory.
 
 ```sh
 nix profile add github:awked-com/overlay
-overlay -C /path/to/project list
-```
-
-## Project layout and sources
-
-Packages live at `pkgs/<name>/default.nix` and patches at
-`pkgs/<name>/patches/NNNN-description.patch`. `--packages-dir` selects another
-package directory. Patch filenames define application order; do not maintain a
-repository `series` file. The package recipe must attach the patches to its
-derivation; `overlay` does not modify Nix recipes.
-
-Without an explicit directory, `overlay` finds the nearest parent containing a
-flake or Git repository. Source lookup uses `packages.<system>.<name>` from the
-project's flake, falling back to the flake's `nixpkgs` input with its default
-overlay. Git projects use tracked files, including local edits; add new Nix
-source files to Git first. Ignored worktrees are excluded, and lookup leaves the
-lockfile unchanged.
-
-`setup PACKAGE PATH` uses an unpacked, unpatched source directory without Nix.
-If PATH is omitted, `SOURCE_ROOT/PACKAGE` takes priority over flake lookup.
-
-## Patch workflow
-
-```sh
 overlay -C /path/to/project setup hello
-overlay -C /path/to/project status hello
 overlay -C /path/to/project new hello 0001-fix-greeting.patch src/hello.c
 overlay -C /path/to/project edit hello src/hello.c
 overlay -C /path/to/project refresh hello
 ```
 
-`discard` removes the worktree, including unrefreshed edits, and preserves
-repository patches.
+Run `overlay help` for commands and options.
 
-Worktrees default to `.patch-worktrees/pkgs` under the project. `--worktrees` or
-`PATCH_WORKTREES` selects another location. Keep worktrees out of version
-control and separate from package directories. Existing worktrees must contain
-this tool's metadata before setup reuses them or discard removes them.
+## Project setup
+
+Packages live at `pkgs/<name>/default.nix`, with patches in
+`pkgs/<name>/patches/NNNN-description.patch`. Filenames define application order;
+do not maintain a repository `series` file. Recipes must attach their patches to
+the derivation; `overlay` does not modify recipes.
+
+Without `-C`, the nearest parent flake or Git repository is selected. Source
+lookup uses `packages.<system>.<name>`, falling back to the flake's `nixpkgs` input
+with its default overlay. Git sources include tracked local edits, exclude
+ignored worktrees, and leave the lockfile unchanged. Add new Nix files to Git
+before setup.
+
+`setup PACKAGE PATH` takes an unpacked, unpatched source directory without Nix.
+If PATH is omitted, `SOURCE_ROOT/PACKAGE` takes priority over flake lookup.
+
+Worktrees default to `.patch-worktrees/pkgs`; use `--worktrees` or
+`PATCH_WORKTREES` to override. Keep them out of version control and separate from
+package directories. Existing directories need this tool's metadata before
+setup reuses them or discard removes them.
 
 Refresh edits before leaving a Quilt shell. Pop affected patches before
-reordering filenames. After updating a source pin, preserve edits, discard the
-old worktree, then run setup again.
+reordering filenames. After changing a source pin, preserve edits, then discard
+and set up the worktree again. **Discard deletes unrefreshed worktree edits** and
+preserves repository patches.
 
 ## Develop
 
 ```sh
 nix develop
-go test ./...
+go test -race ./...
 go vet ./...
+go build ./...
 nix flake check
 nix fmt
 ```
 
-The flake check builds the command and runs its Go tests. Native source-resolution
-tests run outside the build sandbox with a local Nix store. Their synthetic Git
-repositories and local flake inputs require no downloads:
+The flake check builds the command and runs Go tests. Native source tests require
+a local Nix store outside the build sandbox; their synthetic inputs need no
+downloads:
 
 ```sh
 nix develop -c env OVERLAY_NATIVE_NIX_TESTS=1 go test -run TestNativeNixSources -count=1 .
