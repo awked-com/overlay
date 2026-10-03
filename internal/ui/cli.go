@@ -26,16 +26,12 @@ func Args(validate cobra.PositionalArgs) cobra.PositionalArgs {
 }
 
 func Execute(root *cobra.Command, args []string) error {
-	return ExecuteTo(root, args, os.Stdout, os.Stderr)
-}
-
-func ExecuteTo(root *cobra.Command, args []string, out, stderr io.Writer) error {
 	root.SilenceErrors, root.SilenceUsage = true, true
 	var helpErr error
 	root.SetHelpFunc(func(cmd *cobra.Command, _ []string) { helpErr = writeHelp(cmd, true) })
 	root.SetUsageFunc(func(cmd *cobra.Command) error { return writeHelp(cmd, false) })
-	root.SetOut(out)
-	root.SetErr(stderr)
+	root.SetOut(os.Stdout)
+	root.SetErr(os.Stderr)
 	root.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error { return UsageError(cmd, err) })
 	addHelp(root)
 	root.SetArgs(args)

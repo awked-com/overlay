@@ -112,12 +112,7 @@ type StatusError struct {
 	Err  error
 }
 
-func (e *StatusError) Error() string {
-	if e.Err == nil {
-		return ""
-	}
-	return e.Err.Error()
-}
+func (e *StatusError) Error() string { return e.Err.Error() }
 func (e *StatusError) Unwrap() error { return e.Err }
 
 func ExitCode(err error) int {
