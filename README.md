@@ -35,5 +35,6 @@ nix flake check
 nix fmt
 ```
 
-After a Go dependency update, replace `vendorHash` in `default.nix` with the
-`got:` hash from `nix build .#overlay`, then run `nix flake check`.
+After a Go dependency update, set `vendorHash` in `default.nix` to
+`lib.fakeHash`, run `nix build .#overlay`, replace it with the reported `got:`
+hash, then run `nix flake check`.

@@ -26,7 +26,7 @@ buildGoModule {
     ];
   };
 
-  vendorHash = "sha256-0+YEKDc5jW/byxt3mutCh+EIvGm/sVaRoVRgnPBX5ag=";
+  vendorHash = "sha256-xH9Kh3HP5sIiN16M2FEBAqaYMfD7afSELl1jiIMOhTk=";
   subPackages = [ "cmd/overlay" ];
   env.CGO_ENABLED = 0;
   ldflags = [
