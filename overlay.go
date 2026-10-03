@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/awked-com/overlay/internal/process"
-	"github.com/awked-com/overlay/internal/ui"
+	"github.com/awked-com/overlay/internal/terminal"
 )
 
 type Overlay struct {
@@ -316,20 +316,10 @@ func (o *Overlay) Setup(pkg, supplied string) (string, error) {
 
 func (o *Overlay) RefreshStacks(packages []string) error {
 	if len(packages) == 0 {
-		all, e := o.Packages()
+		var e error
+		packages, e = o.Packages()
 		if e != nil {
 			return e
-		}
-
-		for _, p := range all {
-			names, e := PatchNames(o.patches(p))
-			if e != nil {
-				return e
-			}
-
-			if len(names) > 0 {
-				packages = append(packages, p)
-			}
 		}
 	}
 
@@ -356,6 +346,7 @@ func (o *Overlay) RefreshStacks(packages []string) error {
 
 	type replacement struct{ source, target string }
 	staged := []replacement{}
+	refreshed := []string{}
 	for _, pkg := range unique {
 		names, e := PatchNames(o.patches(pkg))
 		if e != nil {
@@ -364,6 +355,7 @@ func (o *Overlay) RefreshStacks(packages []string) error {
 		if len(names) == 0 {
 			continue
 		}
+		refreshed = append(refreshed, pkg)
 
 		source, e := o.Source(pkg, "")
 		if e != nil {
@@ -385,7 +377,7 @@ func (o *Overlay) RefreshStacks(packages []string) error {
 		}
 
 		for _, p := range names {
-			ui.Progress(fmt.Sprintf("Refreshing %s/%s", pkg, p))
+			fmt.Fprintln(os.Stderr, terminal.Style(os.Stderr, terminal.Cyan, fmt.Sprintf("Refreshing %s/%s", pkg, p)))
 			if e = o.quilt(worktree, patches, "push", p).Run(); e != nil {
 				return e
 			}
@@ -414,7 +406,7 @@ func (o *Overlay) RefreshStacks(packages []string) error {
 		}
 	}
 
-	for _, p := range unique {
+	for _, p := range refreshed {
 		fmt.Println("Refreshed patches: " + p)
 	}
 

@@ -141,12 +141,12 @@ func Command() *cobra.Command {
 					return e
 				}
 
-				ui.Heading(pkg)
-				ui.Detail(fmt.Sprintf("%d patches / %s / %s", len(names),
+				fmt.Println(terminal.Style(os.Stdout, terminal.Bold+";"+terminal.Cyan, pkg))
+				fmt.Printf("  %d patches / %s / %s\n", len(names),
 					terminal.Style(os.Stdout, terminal.Green, fmt.Sprintf("%d applied", len(applied))),
-					terminal.Style(os.Stdout, terminal.Yellow, fmt.Sprintf("%d pending", len(names)-len(applied)))))
+					terminal.Style(os.Stdout, terminal.Yellow, fmt.Sprintf("%d pending", len(names)-len(applied))))
 				if _, e = os.Stat(worktree); e == nil {
-					ui.Detail("Worktree: " + terminal.Style(os.Stdout, terminal.Dim, worktree))
+					fmt.Println("  Worktree: " + terminal.Style(os.Stdout, terminal.Dim, worktree))
 				} else {
 					fmt.Printf("  %s Create one with %s\n",
 						terminal.Style(os.Stdout, terminal.Yellow, "No worktree."),
@@ -362,9 +362,9 @@ func Command() *cobra.Command {
 					return e
 				}
 				patches := o.patches(pkg)
-				ui.Progress("Starting Quilt shell for " + pkg)
-				ui.Progress("Worktree: " + worktree)
-				ui.Progress("Patches: " + patches)
+				for _, line := range []string{"Starting Quilt shell for " + pkg, "Worktree: " + worktree, "Patches: " + patches} {
+					fmt.Fprintln(os.Stderr, terminal.Style(os.Stderr, terminal.Cyan, line))
+				}
 				shell := os.Getenv("SHELL")
 				if shell == "" {
 					shell = "/bin/sh"

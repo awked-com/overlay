@@ -23,32 +23,24 @@ var (
 func commandArgument(arg string) string {
 	arg = urlCredentials.ReplaceAllString(arg, "${1}<redacted>@")
 	if !commandWord.MatchString(arg) {
-		return Quote(arg)
+		return "'" + strings.ReplaceAll(arg, "'", "'\"'\"'") + "'"
 	}
 	return arg
-}
-
-// CommandString quotes arguments and redacts URL credentials for display only.
-// Callers must keep other secrets out of command arguments.
-func CommandString(args []string) string {
-	display := make([]string, len(args))
-	for i, arg := range args {
-		display[i] = commandArgument(arg)
-	}
-	return strings.Join(display, " ")
 }
 
 // LogCommand omits environment and stdin, and redacts URL credentials.
 // Callers must keep other secrets out of command arguments.
 func LogCommand(w io.Writer, cmd *exec.Cmd) {
-	line := CommandString(cmd.Args)
+	display := make([]string, len(cmd.Args))
+	for i, arg := range cmd.Args {
+		display[i] = commandArgument(arg)
+	}
+	line := strings.Join(display, " ")
 	if cmd.Dir != "" {
 		line = "(cd " + commandArgument(cmd.Dir) + " && " + line + ")"
 	}
 	fmt.Fprintln(w, terminal.Style(w, terminal.Dim, "Running: "+line))
 }
-
-func Quote(s string) string { return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'" }
 
 func Env(values map[string]string, remove ...string) []string {
 	out := []string{}
@@ -148,11 +140,9 @@ func ExitCode(err error) int {
 	return 1
 }
 
-func Report(err error) int {
+func Exit(err error) {
 	if err != nil && err.Error() != "" {
 		fmt.Fprintln(os.Stderr, terminal.Style(os.Stderr, terminal.Bold+";"+terminal.Red, "error:"), err)
 	}
-	return ExitCode(err)
+	os.Exit(ExitCode(err))
 }
-
-func Exit(err error) { os.Exit(Report(err)) }
