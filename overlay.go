@@ -56,15 +56,14 @@ func (o *Overlay) ValidatePackage(p string) error {
 	if e := o.validateDirectories(); e != nil {
 		return e
 	}
-	names, e := o.Packages()
-	if e != nil {
-		return e
-	}
-	if !packagePattern.MatchString(p) || !slices.Contains(names, p) {
+	if !packagePattern.MatchString(p) {
 		return fmt.Errorf("unknown package: %s", p)
 	}
-
-	return nil
+	s, err := os.Stat(filepath.Join(o.PackagesDir, p, "default.nix"))
+	if errors.Is(err, os.ErrNotExist) || err == nil && !s.Mode().IsRegular() {
+		return fmt.Errorf("unknown package: %s", p)
+	}
+	return err
 }
 
 func ValidatePatch(p string) error {
@@ -139,15 +138,12 @@ func ValidateMetadata(worktree string) error {
 
 func requirePreparedWorktree(worktree string) error {
 	for _, name := range []string{".upstream-source", ".quilt-series"} {
-		info, err := os.Lstat(filepath.Join(worktree, name))
+		_, err := os.Lstat(filepath.Join(worktree, name))
 		if errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("refusing existing directory without overlay worktree metadata %s: %s", name, worktree)
 		}
 		if err != nil {
 			return err
-		}
-		if !info.Mode().IsRegular() {
-			return fmt.Errorf("patch metadata must be a regular file: %s", filepath.Join(worktree, name))
 		}
 	}
 	return nil

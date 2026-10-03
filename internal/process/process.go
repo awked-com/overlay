@@ -48,18 +48,6 @@ func LogCommand(w io.Writer, cmd *exec.Cmd) {
 	fmt.Fprintln(w, terminal.Style(w, terminal.Dim, "Running: "+line))
 }
 
-func Run(args ...string) error {
-	c := exec.Command(args[0], args[1:]...)
-	c.Stdin = os.Stdin
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
-	LogCommand(os.Stderr, c)
-	if err := c.Run(); err != nil {
-		return fmt.Errorf("%s failed: %w", filepath.Base(args[0]), err)
-	}
-	return nil
-}
-
 func Quote(s string) string { return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'" }
 
 func Env(values map[string]string, remove ...string) []string {

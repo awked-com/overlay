@@ -126,8 +126,8 @@ func (o *Overlay) Source(pkg, supplied string) (string, error) {
 					return "", e
 				}
 
-				if e = process.Run("tar", "-xf", supplied, "-C", unpacked); e != nil {
-					return "", e
+				if e = commandAt("", nil, "tar", "-xf", supplied, "-C", unpacked).Run(); e != nil {
+					return "", fmt.Errorf("tar failed: %w", e)
 				}
 
 				if e = os.Rename(unpacked, cache); e != nil {

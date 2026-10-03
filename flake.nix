@@ -60,7 +60,6 @@
               pkgs.xz
               pkgs.bzip2
               pkgs.nixfmt
-              pkgs.actionlint
             ];
           };
         }
